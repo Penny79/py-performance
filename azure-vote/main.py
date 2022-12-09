@@ -48,7 +48,7 @@ view_manager.register_exporter(exporter)
 
 exporter = metrics_exporter.new_metrics_exporter(
     enable_standard_metrics=True, 
-    connection_string='InstrumentationKey=706a869a-1769-4b48-8bd9-d46e98f2f698;IngestionEndpoint=https://centralus-2.in.applicationinsights.azure.com/;LiveEndpoint=https://centralus.livediagnostics.monitor.azure.com/quickpulseservice.svc'
+    connection_string=conStr
 )
 view_manager.register_exporter(exporter)
 
