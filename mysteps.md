@@ -52,15 +52,40 @@ git checkout Deploy_to_VMSS
 
 # AKS
 
+create acr and push image
 ```
-   # Pull the base image
-   FROM tiangolo/uwsgi-nginx-flask:python3.6
-   # Install depndencies 
-   RUN pip install redis
-   RUN pip install opencensus
-   RUN pip install opencensus-ext-azure
-   RUN pip install opencensus-ext-flask
-   RUN pip install flask
-   # Copy the content of the current directory to the /app of the container
-   ADD . /app  
+az acr create --resource-group acdnd-c4-project --name pennz79acr --sku Basic
+az acr login --name pennz79acr
+az acr show --name pennz79acr --query loginServer --output table
+docker tag azure-vote-front:v1 pennz79acr.azurecr.io/azure-vote-front:v1
+docker push pennz79acr.azurecr.io/azure-vote-front:v1
+az acr repository list --name pennz79acr --output table
+az aks update -n udacity-cluster -g acdnd-c4-project --attach-acr pennz79acr
+
+az acr show --name pennz79acr --query loginServer --output table
+```
+
+```
+# Deploy the application. Run the command below from the parent directory where the *azure-vote-all-in-one-redis.yaml* file is present. 
+kubectl apply -f azure-vote-all-in-one-redis.yaml
+kubectl set image deployment azure-vote-front azure-vote-front=pennz79acr.azurecr.io/azure-vote-front:v1
+
+# Test the application at the External IP
+# It will take a few minutes to come alive. 
+kubectl get service
+
+# Check the status of each node
+kubectl get pods
+
+# Define an autoscaler
+kubectl autoscale deployment azure-vote-front --cpu-percent=50 --min=1 --max=10
+
+az aks update --resource-group acdnd-c4-project --name udacity-cluster --update-cluster-autoscaler --cpu-percent=30 --min-count=1 --max-count=10
+```
+
+Produce load
+```
+ kubectl run -i --tty load-generator --rm --image=busybox:1.28 --restart=Never -- /bin/sh -c "while sleep 0.01; do wget -q -O- http://20.245.227.104/; done"
+
+ when failed - delete the pod again: kubectl delete pod load-generator
 ```
